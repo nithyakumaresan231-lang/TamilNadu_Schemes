@@ -19,7 +19,7 @@ def generate_answer(
     prompt: str,
     base_url: Optional[str] = None,
     model_name: Optional[str] = None,
-    temperature: float = 0.2,
+    temperature: float = 0.0,
     stream: bool = False,
 ) -> str:
     """Sends a grounded prompt to Ollama and returns the generated text response.

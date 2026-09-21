@@ -1,9 +1,9 @@
-"""End-to-end test script for Tamil Nadu Government Schemes RAG Assistant."""
+"""End-to-end test script for Tamil Nadu Government Schemes RAG Assistant (50 Schemes)."""
 
 import sys
 import time
 
-# Reconfigure stdout to support UTF-8 characters on Windows consoles
+# Reconfigure stdout to support UTF-8 on Windows consoles
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -13,9 +13,8 @@ from rag.retriever import SchemeRetriever
 
 
 def main():
-    print("=== Initializing Tamil Nadu Schemes RAG Assistant ===")
+    print("=== Initializing Tamil Nadu Schemes RAG Assistant (50 Schemes) ===")
 
-    # Initialize retriever
     retriever = SchemeRetriever(
         index_path="vectorstore/index.faiss",
         embeddings_path="vectorstore/embeddings.npy",
@@ -24,15 +23,17 @@ def main():
     )
 
     test_queries = [
-        "What is the Pudhumai Penn scheme and who is eligible for it?",
+        "What is the Pudhumai Penn scheme and what financial assistance is provided?",
         "What is the objective of the Naan Mudhalvan scheme?",
         "How does the Chief Minister's Breakfast Scheme work in schools?",
+        "What subsidies and insurance support are available for farmers under agricultural schemes?",
+        "What healthcare and emergency medical care schemes are provided in Tamil Nadu?",
     ]
 
     for query in test_queries:
-        print("\n" + "=" * 70)
+        print("\n" + "=" * 75)
         print(f"USER QUERY: {query}")
-        print("=" * 70)
+        print("=" * 75)
 
         start_time = time.time()
 
@@ -57,7 +58,7 @@ def main():
 
         print(f"\n[AI ASSISTANT RESPONSE (Generated in {gen_time:.2f}s)]:")
         print(answer)
-        print("-" * 70)
+        print("-" * 75)
 
 
 if __name__ == "__main__":
