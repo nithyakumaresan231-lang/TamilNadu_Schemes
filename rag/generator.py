@@ -21,6 +21,8 @@ def generate_answer(
     model_name: Optional[str] = None,
     temperature: float = 0.0,
     stream: bool = False,
+    timeout: int = 120,
+    num_predict: int = 256,
 ) -> str:
     """Sends a grounded prompt to Ollama and returns the generated text response.
 
@@ -30,6 +32,8 @@ def generate_answer(
         model_name: Target model name in Ollama (defaults to OLLAMA_MODEL env var).
         temperature: Generation sampling temperature.
         stream: Whether to stream the HTTP response (default: False).
+        timeout: Timeout in seconds for HTTP request to Ollama (default: 120).
+        num_predict: Maximum tokens to generate (default: 256).
 
     Returns:
         Generated text string from Llama.
@@ -47,11 +51,12 @@ def generate_answer(
         "stream": stream,
         "options": {
             "temperature": temperature,
+            "num_predict": num_predict,
         },
     }
 
     try:
-        response = requests.post(url, json=payload, timeout=60)
+        response = requests.post(url, json=payload, timeout=timeout)
     except requests.exceptions.RequestException as err:
         raise ConnectionError(
             f"Failed to connect to local Ollama service at '{url}'. "

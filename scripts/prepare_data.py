@@ -11,13 +11,14 @@ import json
 import sys
 from pathlib import Path
 
-from ingestion.chunker import create_scheme_chunks
-from ingestion.loader import load_schemes, validate_scheme
+from scripts.ingestion.chunker import create_scheme_chunks
+from scripts.ingestion.loader import load_schemes, validate_scheme
 
 
 def main():
-    raw_data_path = Path("data/schemes.json")
-    output_dir = Path("data/processed")
+    project_root = Path(__file__).resolve().parent.parent
+    raw_data_path = project_root / "data" / "schemes.json"
+    output_dir = project_root / "data" / "processed"
     output_file = output_dir / "chunks.json"
 
     print("=== Starting Tamil Nadu Schemes Data Pipeline ===")

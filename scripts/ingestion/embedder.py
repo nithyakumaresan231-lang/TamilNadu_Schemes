@@ -7,7 +7,7 @@ from sentence_transformers import SentenceTransformer
 
 def generate_embeddings(
     chunks: List[Dict[str, Any]],
-    model_name: str = "all-MiniLM-L6-v2",
+    model_name: str = "intfloat/multilingual-e5-small",
     model: Optional[SentenceTransformer] = None,
 ) -> np.ndarray:
     """Generates normalized vector embeddings for text chunks.
@@ -28,7 +28,10 @@ def generate_embeddings(
         print(f"Loading SentenceTransformer model '{model_name}'...")
         model = SentenceTransformer(model_name)
 
-    texts = [chunk["text"] for chunk in chunks]
+    if "e5" in model_name.lower():
+        texts = [f"passage: {chunk['text']}" for chunk in chunks]
+    else:
+        texts = [chunk["text"] for chunk in chunks]
 
     if not texts:
         raise ValueError("Error: None of the provided chunks contain a 'text' field.")

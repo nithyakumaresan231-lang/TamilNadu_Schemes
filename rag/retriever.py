@@ -22,7 +22,7 @@ class SchemeRetriever:
         index_path: Union[str, Path] = "vectorstore/index.faiss",
         embeddings_path: Union[str, Path] = "vectorstore/embeddings.npy",
         chunks_path: Union[str, Path] = "data/processed/chunks.json",
-        model_name: str = "all-MiniLM-L6-v2",
+        model_name: str = "intfloat/multilingual-e5-small",
         model: Optional[SentenceTransformer] = None,
     ):
         """Initializes the retriever by loading index/embeddings, chunk data, and model."""
@@ -68,8 +68,13 @@ class SchemeRetriever:
         else:
             self.model = model
 
-    def retrieve(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
-        """Retrieves top_k relevant scheme chunks for a given query."""
+    def retrieve(
+        self,
+        query: str,
+        top_k: int = 5,
+        min_similarity: float = 0.0,
+    ) -> List[Dict[str, Any]]:
+        """Retrieves top_k relevant scheme chunks for a given query, ensuring scheme diversity."""
         if not query or not query.strip():
             return []
 
@@ -78,10 +83,12 @@ class SchemeRetriever:
             return []
 
         effective_k = min(max(1, top_k), total_chunks)
+        fetch_k = min(effective_k * 5, total_chunks)
 
         # Encode and normalize query vector (384 dimensions)
+        encoded_query = f"query: {query}" if "e5" in self.model_name.lower() else query
         query_embedding = self.model.encode(
-            [query],
+            [encoded_query],
             convert_to_numpy=True,
             normalize_embeddings=True,
         ).astype(np.float32)
@@ -90,23 +97,41 @@ class SchemeRetriever:
         distances = []
 
         if self.use_faiss:
-            dists, idxs = self.index.search(query_embedding, effective_k)
+            dists, idxs = self.index.search(query_embedding, fetch_k)
             indices = idxs[0]
             distances = dists[0]
         else:
             # Cosine similarity search via dot product on normalized vectors
             scores = np.dot(self.embeddings, query_embedding[0])
-            top_indices = np.argsort(scores)[::-1][:effective_k]
+            top_indices = np.argsort(scores)[::-1][:fetch_k]
             indices = top_indices
             distances = scores[top_indices]
 
         results: List[Dict[str, Any]] = []
+        seen_schemes: Dict[str, int] = {}
+        max_chunks_per_scheme = 2
 
         for idx, score in zip(indices, distances):
-            if 0 <= idx < len(self.chunks):
-                chunk_record = dict(self.chunks[idx])
-                chunk_record["similarity_score"] = float(score)
-                results.append(chunk_record)
+            if not (0 <= idx < len(self.chunks)):
+                continue
+
+            score = float(score)
+
+            if score < min_similarity:
+                continue
+
+            chunk_record = dict(self.chunks[idx])
+            s_name = chunk_record.get("scheme_name", "Unknown")
+
+            if seen_schemes.get(s_name, 0) >= max_chunks_per_scheme:
+                continue
+
+            chunk_record["similarity_score"] = score
+            results.append(chunk_record)
+            seen_schemes[s_name] = seen_schemes.get(s_name, 0) + 1
+            
+            if len(results) >= effective_k:
+                break
 
         return results
 
@@ -117,7 +142,7 @@ def retrieve(
     index_path: Union[str, Path] = "vectorstore/index.faiss",
     embeddings_path: Union[str, Path] = "vectorstore/embeddings.npy",
     chunks_path: Union[str, Path] = "data/processed/chunks.json",
-    model_name: str = "all-MiniLM-L6-v2",
+    model_name: str = "intfloat/multilingual-e5-small",
 ) -> List[Dict[str, Any]]:
     """Standalone helper function to perform retrieval."""
     retriever = SchemeRetriever(

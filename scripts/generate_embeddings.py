@@ -5,12 +5,13 @@ import sys
 from pathlib import Path
 import numpy as np
 
-from ingestion.embedder import generate_embeddings
+from scripts.ingestion.embedder import generate_embeddings
 
 
 def main():
-    chunks_path = Path("data/processed/chunks.json")
-    vectorstore_dir = Path("vectorstore")
+    project_root = Path(__file__).resolve().parent.parent
+    chunks_path = project_root / "data" / "processed" / "chunks.json"
+    vectorstore_dir = project_root / "vectorstore"
     embeddings_path = vectorstore_dir / "embeddings.npy"
 
     print("=== Starting Embedding Generation Pipeline ===")
@@ -26,7 +27,7 @@ def main():
     print(f"Loaded {len(chunks)} chunks from '{chunks_path}'")
 
     # 2. Generate embeddings
-    embeddings = generate_embeddings(chunks, model_name="all-MiniLM-L6-v2")
+    embeddings = generate_embeddings(chunks, model_name="intfloat/multilingual-e5-small")
 
     print("Generated embeddings")
     print(f"Embedding shape: {embeddings.shape}")

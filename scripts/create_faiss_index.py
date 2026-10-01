@@ -5,12 +5,13 @@ from pathlib import Path
 import faiss
 import numpy as np
 
-from ingestion.build_index import build_faiss_index, load_and_verify_index
+from scripts.ingestion.build_index import build_faiss_index, load_and_verify_index
 
 
 def main():
-    embeddings_path = Path("vectorstore/embeddings.npy")
-    index_path = Path("vectorstore/index.faiss")
+    project_root = Path(__file__).resolve().parent.parent
+    embeddings_path = project_root / "vectorstore" / "embeddings.npy"
+    index_path = project_root / "vectorstore" / "index.faiss"
 
     print("=== FAISS Index Build ===")
 
