@@ -55,7 +55,7 @@ try:
         model_name="intfloat/multilingual-e5-small",
     )
     logger.info("SchemeRetriever initialized successfully.")
-    
+
     schemes_path = os.path.join(os.path.dirname(__file__), "..", "data", "schemes.json")
     with open(schemes_path, "r", encoding="utf-8") as f:
         SCHEMES_DB = json.load(f)
@@ -64,7 +64,7 @@ try:
             if not original:
                 continue
             name = original.lower()
-            
+
             def add_alias(alias: str):
                 if alias:
                     SCHEME_ALIAS_MAP[alias] = original
@@ -73,7 +73,7 @@ try:
                         SCHEME_ALIAS_MAP[alias.replace("-", " ")] = original
 
             add_alias(name)
-            
+
             # Smart alias for long names
             if " ninaivu " in name:
                 short_name = name.split(" ninaivu ")[1].strip()
@@ -83,10 +83,10 @@ try:
             elif " ammaiyar " in name:
                 short_name = name.split(" ammaiyar ")[1].strip()
                 add_alias(short_name)
-                
+
             for alias in s.get("aliases", []):
                 add_alias(alias.lower())
-                    
+
     logger.info(f"Loaded {len(SCHEMES_DB)} schemes into memory with {len(SCHEME_ALIAS_MAP)} aliases.")
 
 except Exception as err:
@@ -97,6 +97,7 @@ except Exception as err:
 # Request / Response Schemas
 class AskRequest(BaseModel):
     question: str = Field(..., description="User natural language question about Tamil Nadu Government Schemes")
+    language: str = Field("en", description="Language mode: 'en' or 'ta'")
 
 
 class AskResponse(BaseModel):
@@ -143,15 +144,15 @@ def rank_and_filter_discovery_schemes(query: str, candidate_chunks: List[Dict[st
         "differently_abled": ["differently abled", "disabled", "handicapped", "differently-abled"],
         "farmer": ["farmer", "agriculture", "uzhavar", "crop"]
     }
-    
+
     query_lower = query.lower()
-    
+
     # Determine which special conditions the user actually mentioned
     mentioned_conditions = set()
     for cond_name, kw_list in exclusion_conditions.items():
         if any(kw in query_lower for kw in kw_list):
             mentioned_conditions.add(cond_name)
-            
+
     # Group chunks by scheme to evaluate the scheme as a whole
     schemes_dict = {}
     for c in candidate_chunks:
@@ -159,15 +160,15 @@ def rank_and_filter_discovery_schemes(query: str, candidate_chunks: List[Dict[st
         if s_name not in schemes_dict:
             schemes_dict[s_name] = []
         schemes_dict[s_name].append(c)
-        
+
     scored_schemes = []
-    
+
     for s_name, chunks in schemes_dict.items():
         # Find the full scheme data from SCHEMES_DB
         scheme_data = next((s for s in SCHEMES_DB if s.get("scheme_name") == s_name), None)
         if not scheme_data:
             continue
-            
+
         # Compile all relevant fields into one text for condition checking and scoring
         fields_text = " ".join([
             str(scheme_data.get("target_beneficiaries", "")),
@@ -176,7 +177,7 @@ def rank_and_filter_discovery_schemes(query: str, candidate_chunks: List[Dict[st
             str(scheme_data.get("objective", "")),
             str(scheme_data.get("scheme_name", ""))
         ]).lower()
-        
+
         # 1. EXCLUSION CHECK
         exclude = False
         for cond_name, kw_list in exclusion_conditions.items():
@@ -184,46 +185,46 @@ def rank_and_filter_discovery_schemes(query: str, candidate_chunks: List[Dict[st
                 if any(kw in fields_text for kw in kw_list):
                     exclude = True
                     break
-        
+
         if exclude:
             continue
-            
+
         # 2. SCORING
         score = 0
         # Simple word overlap between query and fields
         query_words = set(re.findall(r'\w+', query_lower))
         stop_words = {"i", "am", "a", "is", "there", "any", "for", "me", "what", "how", "who", "the", "in", "of", "and", "to", "do"}
         query_keywords = query_words - stop_words
-        
+
         for kw in query_keywords:
             if kw in fields_text:
                 score += 1
-                
+
         # Also include FAISS similarity as a base score
         base_similarity = max((c.get("similarity_score", 0.0) for c in chunks), default=0.0)
         final_score = score + (base_similarity * 2) # give some weight to semantic similarity
-        
+
         scored_schemes.append({
             "scheme_name": s_name,
             "chunks": chunks,
             "score": final_score
         })
-        
+
     # Sort by score descending
     scored_schemes.sort(key=lambda x: x["score"], reverse=True)
-    
+
     # Rebuild final chunks, taking top 2 chunks per top ranked scheme
     final_chunks = []
     # Take top 5 schemes max to avoid overwhelming context
     for s in scored_schemes[:5]:
         final_chunks.extend(s["chunks"][:2])
-        
+
     return final_chunks
 
 def is_followup_question(query: str, last_scheme_name: str = None) -> bool:
     """Very basic heuristic to check if a query might be a follow-up."""
     q_lower = query.lower()
-    
+
     # 1. STRONG TOPIC DETECTION
     # If the user introduces a strong domain topic that does NOT belong to the last scheme,
     # it is a new topic, not a follow-up.
@@ -239,7 +240,7 @@ def is_followup_question(query: str, last_scheme_name: str = None) -> bool:
         "girlchild": ["girl child"],
         "pilgrimage": ["pilgrimage", "jerusalem", "hajj", "christian", "muslim"]
     }
-    
+
     for topic, keywords in strong_topics.items():
         if any(kw in q_lower for kw in keywords):
             if last_scheme_name:
@@ -251,7 +252,7 @@ def is_followup_question(query: str, last_scheme_name: str = None) -> bool:
 
     followup_keywords = ["how", "what", "who", "when", "where", "apply", "eligible", "eligibility", "documents", "benefit", "money"]
     words = re.findall(r'\w+', q_lower)
-    
+
     # If it asks about a "scheme" generically, it's likely a new query
     if "scheme" in q_lower or "thittam" in q_lower or "yojana" in q_lower:
         if "this scheme" not in q_lower:
@@ -264,8 +265,8 @@ def is_followup_question(query: str, last_scheme_name: str = None) -> bool:
 def ask_question(request: AskRequest):
     """Processes user questions through the existing RAG pipeline."""
     # 1. Validate question
-    question_text = request.question.strip() if request.question else ""
-    if not question_text:
+    original_question_text = request.question.strip() if request.question else ""
+    if not original_question_text:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Question must not be empty.",
@@ -278,6 +279,19 @@ def ask_question(request: AskRequest):
         )
 
     try:
+        # Phase 7A: Tamil Translation Layer (Incoming)
+        question_text = original_question_text
+        if request.language == "ta":
+            from backend.translation import translate_tamil_to_english
+            try:
+                question_text = translate_tamil_to_english(original_question_text)
+                logger.info(f"Translated TA -> EN query: {question_text}")
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Translation failed. Please try again. ({str(e)})",
+                )
+
         # CONTEXT RESOLUTION (Step 3 & 5)
         detected_scheme = detect_scheme_in_query(question_text)
         is_single_scheme_query = False
@@ -315,7 +329,7 @@ def ask_question(request: AskRequest):
         else:
             # Discovery query (Step 4) - Use ranking layer to filter and score retrieved chunks
             final_chunks = rank_and_filter_discovery_schemes(question_text, chunks)
-            
+
             # Sort final chunks by scheme name to group them together for the LLM
             final_chunks.sort(key=lambda x: x.get("scheme_name", ""))
 
@@ -339,8 +353,8 @@ def ask_question(request: AskRequest):
 
         # 5. Build existing RAG prompt
         prompt = build_prompt(
-            query=question_text, 
-            context_chunks=final_chunks, 
+            query=question_text,
+            context_chunks=final_chunks,
             is_multi_scheme=not is_single_scheme_query,
             is_followup=is_followup
         )
@@ -353,7 +367,7 @@ def ask_question(request: AskRequest):
         actual_sources = []
         for s in sources:
             # We do a lowercased check for a significant chunk of the scheme name to ensure we catch variations
-            # If the scheme name is short, check it directly. 
+            # If the scheme name is short, check it directly.
             # If it is long, check if the first 3 words are in the answer, or if the whole thing is.
             s_lower = s.lower()
             ans_lower = answer.lower()
@@ -366,10 +380,18 @@ def ask_question(request: AskRequest):
                     subset = " ".join(words[:3])
                     if subset in ans_lower:
                         actual_sources.append(s)
-        
+
         # If filtering accidentally stripped everything (due to LLM formatting), fallback to the primary target
         if not actual_sources and sources:
             actual_sources = [sources[0]] if is_single_scheme_query else []
+
+        # Phase 7A: English -> Tamil Translation (Outgoing)
+        if request.language == "ta":
+            from backend.translation import translate_english_to_tamil
+            try:
+                answer = translate_english_to_tamil(answer)
+            except Exception as e:
+                logger.error(f"Translation Error (EN->TA): {e}. Falling back to English.")
 
         # Return answer + strictly filtered sources
         return AskResponse(answer=answer, sources=actual_sources)

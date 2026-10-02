@@ -11,7 +11,7 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [schemes, setSchemes] = useState(schemesData);
   const [schemesLoaded, setSchemesLoaded] = useState(true);
-  
+
   // Chat state
   const [query, setQuery] = useState('');
   const [messages, setMessages] = useState([]);
@@ -22,6 +22,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedUiCategory, setSelectedUiCategory] = useState('');
+  const [language, setLanguage] = useState('en');
 
 
 
@@ -54,11 +55,13 @@ function App() {
 
     try {
       const response = await axios.post('http://localhost:8000/api/chat', {
-        question: activeQuery
+        question: activeQuery,
+        language: language
+
       });
-      
-      const assistantMsg = { 
-        role: 'assistant', 
+
+      const assistantMsg = {
+        role: 'assistant',
         content: response.data.answer,
         sources: response.data.sources
       };
@@ -66,9 +69,9 @@ function App() {
     } catch (error) {
       console.error("API Error:", error);
       const backendError = error.response?.data?.error;
-      const errorMsg = { 
-        role: 'assistant', 
-        content: backendError || "We are currently unable to process your request. Please try again later or check if the backend service is running." 
+      const errorMsg = {
+        role: 'assistant',
+        content: backendError || "We are currently unable to process your request. Please try again later or check if the backend service is running."
       };
       setMessages(prev => [...prev, errorMsg]);
     } finally {
@@ -80,18 +83,18 @@ function App() {
     alert("Voice input will be available soon.");
   };
 
-  
+
   const getUiCategory = (scheme) => {
     const cat = (scheme.category || '').toLowerCase();
     const dept = (scheme.department || '').toLowerCase();
-    
+
     if (cat.includes('education') || dept.includes('education')) return 'Education';
     if (cat.includes('agriculture') || dept.includes('agriculture') || dept.includes('animal') || dept.includes('fisher')) return 'Agriculture';
     if (cat.includes('health') || dept.includes('health') || cat.includes('maternity') || cat.includes('medical')) return 'Health';
     if (cat.includes('women') || cat.includes('child') || cat.includes('girl') || cat.includes('newborn') || cat.includes('marriage')) return 'Women & Child Welfare';
     if (cat.includes('employment') || cat.includes('labour') || cat.includes('skill') || cat.includes('entrepreneur') || cat.includes('worker') || dept.includes('labour') || dept.includes('worker')) return 'Employment';
     if (cat.includes('social welfare') || cat.includes('social security') || cat.includes('differently abled') || cat.includes('elderly') || cat.includes('minority') || cat.includes('pension') || dept.includes('social welfare')) return 'Social Welfare';
-    
+
     return 'Other';
   };
 
@@ -135,7 +138,7 @@ function App() {
               <div className="chat-panel-header">
                 Ask About Government Schemes
               </div>
-              
+
               {messages.length > 0 && (
                 <div className="chat-messages">
                   {messages.map((msg, idx) => (
@@ -242,8 +245,8 @@ function App() {
       case 'SCHEMES':
 const filteredSchemes = schemes.filter(s => {
           const searchLower = searchTerm.toLowerCase();
-          const matchesSearch = !searchTerm || 
-                                (s.scheme_name || '').toLowerCase().includes(searchLower) || 
+          const matchesSearch = !searchTerm ||
+                                (s.scheme_name || '').toLowerCase().includes(searchLower) ||
                                 (s.objective || '').toLowerCase().includes(searchLower) ||
                                 (s.aliases || []).some(a => (a || '').toLowerCase().includes(searchLower));
           const matchesDept = selectedDept ? s.department === selectedDept : true;
@@ -255,20 +258,20 @@ const filteredSchemes = schemes.filter(s => {
           <div>
             <h2 className="section-title">Government Schemes Directory</h2>
             <div className="search-box">
-              <input 
-                type="text" 
-                placeholder="Search schemes..." 
+              <input
+                type="text"
+                placeholder="Search schemes..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setSelectedUiCategory(''); setSelectedDept(''); }}
               />
-              <select style={{padding: '0.8rem', marginLeft: '0.5rem', borderRadius: '4px', border: '1px solid #ccc'}} 
-                      value={selectedDept} 
+              <select style={{padding: '0.8rem', marginLeft: '0.5rem', borderRadius: '4px', border: '1px solid #ccc'}}
+                      value={selectedDept}
                       onChange={(e) => { setSelectedDept(e.target.value); setSelectedUiCategory(''); }}>
                 <option value="">All Departments</option>
                 {departments.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
-            
+
             <div className="grid-container">
 {filteredSchemes.map((scheme, idx) => (
                 <details className="card" key={idx} style={{cursor: 'pointer'}}>
@@ -340,7 +343,7 @@ const filteredSchemes = schemes.filter(s => {
             <div className="about-section">
               <h3>Tamil Nadu Government Schemes - AI Assistant</h3>
               <p style={{marginTop: '1rem'}}>An academic project designed to help users discover information about Tamil Nadu Government schemes, including benefits, eligibility, application procedures and related details.</p>
-              
+
               <h4>Technology Stack:</h4>
               <ul>
                 <li>FastAPI</li>
@@ -383,6 +386,12 @@ const filteredSchemes = schemes.filter(s => {
           <button className={`nav-link ${activeTab === 'DEPARTMENTS' ? 'active' : ''}`} onClick={() => handleNavClick('DEPARTMENTS')}>DEPARTMENTS</button>
           <button className={`nav-link ${activeTab === 'SERVICES' ? 'active' : ''}`} onClick={() => handleNavClick('SERVICES')}>SERVICES</button>
           <button className={`nav-link ${activeTab === 'ABOUT' ? 'active' : ''}`} onClick={() => handleNavClick('ABOUT')}>ABOUT</button>
+
+          <div style={{marginLeft: 'auto', display: 'flex', gap: '10px', alignItems: 'center', padding: '0.5rem 1rem'}}>
+             <span style={{color: language === 'en' ? '#fff' : '#ccc', cursor: 'pointer', fontWeight: language === 'en' ? 'bold' : 'normal'}} onClick={() => setLanguage('en')}>English</span>
+             <span style={{color: '#fff'}}>|</span>
+             <span style={{color: language === 'ta' ? '#fff' : '#ccc', cursor: 'pointer', fontWeight: language === 'ta' ? 'bold' : 'normal'}} onClick={() => setLanguage('ta')}>தமிழ்</span>
+          </div>
         </div>
       </nav>
 
@@ -405,14 +414,14 @@ const filteredSchemes = schemes.filter(s => {
         <div className="footer-content">
           <h3>Tamil Nadu Government Schemes</h3>
           <p>Government Scheme Information Assistant</p>
-          
+
           <div className="footer-links">
             <a href="#" onClick={(e) => { e.preventDefault(); handleNavClick('ABOUT'); }}>About</a>
             <a href="#">Accessibility</a>
             <a href="#">Important Links</a>
             <a href="#">Contact</a>
           </div>
-          
+
           <div className="disclaimer">
             This is an academic project developed as a Government Scheme Information Assistant. It is not an official Government of Tamil Nadu service.
           </div>

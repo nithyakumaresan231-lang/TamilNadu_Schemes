@@ -5,3 +5,4 @@ faiss-cpu
 numpy
 requests
 python-dotenv
+deep-translator>=1.11.4

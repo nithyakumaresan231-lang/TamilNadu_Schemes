@@ -48,6 +48,7 @@ CRITICAL RULES:
 3. If the requested information is missing, state exactly: "The available official record does not specify this information for this scheme." Do not compensate by generating unrelated fields.
 4. DO NOT invent rural-area requirements, generic financial assistance, portals, forms, or deadlines unless explicitly in the text.
 5. Keep the output clean and concise.
+6. NO MATH OR BENEFIT CALCULATION: Never calculate, combine, add, multiply, or derive a new monetary benefit from separate benefit fields. Report each benefit exactly as stated in CONTEXT. Do not convert percentages into rupee amounts unless explicitly provided. Do not create a "total benefit" unless the context explicitly states a total benefit.
 
 OUTPUT FORMAT:
 Provide a concise answer with just the requested information. For example:
@@ -61,6 +62,7 @@ CRITICAL RULES:
 2. If the user asks to verify a claim (e.g. "Does the government provide 50000?"), answer DIRECTLY based on context. If the records do not support the claim, clearly state: "The available official records do not support this claim."
 3. List all the relevant schemes provided in the context. Do not invent unrelated schemes.
 4. Keep the output clean. Do not output internal brackets or template instructions.
+5. NO MATH OR BENEFIT CALCULATION: Never calculate, combine, add, multiply, or derive a new monetary benefit from separate benefit fields. Report each benefit exactly as stated in CONTEXT. Do not convert percentages into rupee amounts unless explicitly provided. Do not create a "total benefit" unless the context explicitly states a total benefit.
 
 OUTPUT FORMAT:
 Use a clean markdown list for the schemes. For each scheme, briefly state who it is for and what the benefit is, ONLY if the information is present in the context."""
@@ -70,13 +72,16 @@ Answer the user's question directly using ONLY the factual information provided 
 
 CRITICAL RULES:
 1. Ground your answer strictly in CONTEXT facts. Do not invent facts, URLs, documents, or procedures.
-2. If the user asks to verify a claim (e.g. "Does the government provide 50000?"), answer DIRECTLY based on context. If the records do not support the claim, state: "The available official records do not support this claim."
-3. IMPLEMENTATION IS NOT APPLICATION: If a scheme is implemented through schools or departments, do NOT invent an application process.
-4. If requested information is missing, do not generate a section for it. Just omit it.
-5. Keep the output clean. Do not output internal brackets or template instructions.
+2. If the user asks a specific question (e.g., eligibility, application process, benefits), extract and provide that EXACT information from the context. Do NOT state the claim is unsupported if the information is explicitly present.
+3. If the user asks to verify a specific claim (e.g. "Does the government provide 50000?"), answer DIRECTLY based on context. ONLY if the records contradict or omit the claim, state: "The available official records do not support this claim."
+4. IMPLEMENTATION IS NOT APPLICATION: If a scheme is implemented through schools or departments, do NOT invent an application process.
+5. If requested information is missing, do not generate a section for it. Just omit it.
+6. Keep the output clean. Do not output internal brackets or template instructions.
+7. NO MATH OR BENEFIT CALCULATION: Never calculate, combine, add, multiply, or derive a new monetary benefit from separate benefit fields. Report each benefit exactly as stated in CONTEXT. Do not convert percentages into rupee amounts unless explicitly provided. Do not create a "total benefit" unless the context explicitly states a total benefit.
 
 OUTPUT FORMAT:
-Use a clean markdown structure. Include the Scheme Name as a heading. Use bold labels like Overview, Target, Benefit, Eligibility, and How to apply. ONLY include a label if you have actual facts from the context. If a detail is missing, skip the label entirely."""
+If the user asks a specific question (e.g., about eligibility, application process, or a specific benefit), answer ONLY that requested field. DO NOT output unrequested sections from the context.
+If the user asks for a general overview, format the available facts using clear markdown headings."""
 
     prompt = f"""{system_rules}
 
