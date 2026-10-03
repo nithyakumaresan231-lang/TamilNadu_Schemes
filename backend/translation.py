@@ -703,6 +703,32 @@ def translate_tamil_to_english(
 
     original_text = text.strip()
 
+    # Pre-translation canonical normalization for Tamil Pudhalvan
+    # This prevents MyMemory from translating it to "Tamil Muttalavan" or "Tamil sonthavan"
+    tamil_pudhalvan_variations = [
+        "தமிழ்ப் புதல்வன்",
+        "தமிழ் புதல்வன்",
+    ]
+    for variation in tamil_pudhalvan_variations:
+        if variation in original_text:
+            original_text = original_text.replace(variation, "Tamil Pudhalvan")
+            break
+            
+    vetri_variations = [
+        "வெற்றி தொழில் முனைவோர் திட்டத்தின் கீழ்",
+        "வெற்றி தொழில் முனைவோர் திட்டத்தின்",
+        "வெற்றி தொழில் முனைவோர் திட்டத்திற்கு",
+        "வெற்றி தொழில் முனைவோர் திட்டத்தில்",
+        "வெற்றி தொழில் முனைவோர் திட்டத்தை",
+        "வெற்றி தொழில் முனைவோர் திட்டம்",
+        "வெற்றி தொழில்முனைவோர் திட்டம்",
+        "வெற்றி தொழில் முனைவர் திட்டம்"
+    ]
+    for variation in vetri_variations:
+        if variation in original_text:
+            original_text = original_text.replace(variation, "Vetri Thozhil Munaivor Thittam")
+            break
+
     try:
 
         translator = MyMemoryTranslator(
