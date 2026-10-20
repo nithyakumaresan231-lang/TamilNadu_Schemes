@@ -15,6 +15,7 @@ import pudhumaiImg from '../../images/Pudhumai_pen.png';
 import tamilImg from '../../images/tamil_pudhalvan.jpg';
 import farmerImg from '../../images/farmer_scheme.jpg';
 import handloomImg from '../../images/Handloom_scheme.jpg';
+import RecommendationsPage from './RecommendationsPage';
 
 // Helper for image mapping based on requirements
 const getImageForScheme = (schemeName) => {
@@ -73,6 +74,7 @@ const Header = ({ language, setLanguage }) => {
       <nav className="header-nav">
         <Link to="/" className={`nav-link ${isActive('/')}`}>Home</Link>
         <Link to="/schemes" className={`nav-link ${isActive('/schemes')}`}>Schemes</Link>
+        <Link to="/find-schemes" className={`nav-link ${isActive('/find-schemes')}`}>Find Schemes</Link>
         <Link to="/departments" className={`nav-link ${isActive('/departments')}`}>Departments</Link>
         <Link to="/services" className={`nav-link ${isActive('/services')}`}>Services</Link>
         <Link to="/about" className={`nav-link ${isActive('/about')}`}>About</Link>
@@ -100,6 +102,7 @@ const Footer = () => (
         <div className="footer-column">
           <h5>Explore</h5>
           <Link to="/schemes">All schemes</Link>
+          <Link to="/find-schemes">Find schemes for me</Link>
           <Link to="/">Citizen categories</Link>
           <Link to="/departments">Departments</Link>
           <Link to="/services">Services</Link>
@@ -169,7 +172,8 @@ const HomePage = () => {
           <p className="hero-subtitle">Discover government schemes, benefits, eligibility and application information.</p>
           <div className="hero-buttons">
             <Link to="/schemes" className="btn-primary">Explore Schemes <ArrowRight size={18} /></Link>
-            <Link to="/assistant" className="btn-outline">Ask Government Assistant</Link>
+            <Link to="/find-schemes" className="btn-outline">Find Schemes for Me</Link>
+            <Link to="/assistant" className="btn-outline">Ask Assistant</Link>
           </div>
         </div>
         <div className="hero-image-wrapper">
@@ -867,6 +871,8 @@ export default function App() {
             <Route path="/departments" element={<DepartmentsPage />} />
             <Route path="/services" element={<ServicesPage />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/find-schemes" element={<RecommendationsPage language={language} />} />
+            <Route path="/recommendations" element={<RecommendationsPage language={language} />} />
             <Route path="/assistant" element={<AssistantPage language={language} />} />
           </Routes>
         </main>

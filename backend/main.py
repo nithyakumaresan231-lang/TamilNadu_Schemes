@@ -408,3 +408,8 @@ def ask_question(request: AskRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"error": "An internal server error occurred while processing your request."}
         )
+
+
+# Include Personalized Scheme Recommendation Router
+from backend.recommendation_routes import router as recommendation_router
+app.include_router(recommendation_router)
